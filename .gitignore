@@ -12,3 +12,6 @@ aip/
 
 # Streamlit secrets (로컬용)
 .streamlit/secrets.toml
+
+data/
+csv_exports/

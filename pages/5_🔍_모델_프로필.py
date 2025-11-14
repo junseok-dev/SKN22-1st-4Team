@@ -5,10 +5,10 @@ import altair as alt
 from wordcloud import WordCloud 
 import matplotlib.pyplot as plt 
 import os 
-# [수정] import 방식 변경 (news_api 임포트 제거)
 from backend.search_queries import get_all_brands, get_models_by_brand, get_recall_comparison, get_model_profile_data
 from backend.stats_queries import get_summary_stats
-# from backend.news_api import get_naver_news # <-- 삭제
+from Home import display_custom_header 
+
 
 # --- [0] 페이지 기본 설정 ---
 st.set_page_config(
@@ -16,6 +16,9 @@ st.set_page_config(
     page_icon="🔍", 
     layout="wide"
 )
+
+display_custom_header()
+
 
 # --- [1] 제목 ---
 st.title("🔍 모델 상세 프로필")
@@ -119,6 +122,3 @@ try:
         st.caption(f"ℹ️ (데이터 기준 기간: {min_date} ~ {max_date})")
 except Exception:
     pass
-
-# --- [5] (삭제) 사이드바 하단 뉴스 ---
-# (뉴스 기능이 메인 페이지로 이동되어 삭제)

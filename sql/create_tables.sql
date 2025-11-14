@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS Model (
 
 
 -- ---------------------------------------------------
--- 3. Keyword (키워드) 테이블  (★ 수정됨)
+-- 3. Keyword (키워드) 테이블 
 -- ---------------------------------------------------
 CREATE TABLE IF NOT EXISTS Keyword (
     keyword_id INT AUTO_INCREMENT PRIMARY KEY COMMENT '키워드ID (기본키)',
@@ -63,10 +63,7 @@ CREATE TABLE IF NOT EXISTS Recall_Keyword_Junction (
     recall_id INT NOT NULL COMMENT '리콜ID (외래키)',
     keyword_id INT NOT NULL COMMENT '키워드ID (외래키)',
     
-    PRIMARY KEY (recall_id, keyword_id), -- 복합 기본키
+    PRIMARY KEY (recall_id, keyword_id),
     FOREIGN KEY (recall_id) REFERENCES Recall(recall_id),
     FOREIGN KEY (keyword_id) REFERENCES Keyword(keyword_id)
 ) ENGINE=InnoDB COMMENT='리콜과 키워드 N:M 연결 테이블';
-
-ALTER TABLE Keyword
-ADD COLUMN keyword_desc TEXT COMMENT '키워드 상세 설명' AFTER keyword_text;

@@ -69,6 +69,7 @@ def get_all_keywords_with_desc():
         if conn and conn.is_connected():
             conn.close()
 
+# --- [수정된 함수] ---
 def search_recalls(brand, model, year, keyword):
     conn = db_manager.create_connection()
     if conn is None: return pd.DataFrame() 
@@ -76,9 +77,16 @@ def search_recalls(brand, model, year, keyword):
     try:
         query = """
         SELECT 
-            b.brand_name AS '브랜드', m.model_name AS '차종', r.recall_date AS '리콜개시일',
-            r.prod_from AS '생산시작', r.prod_to AS '생산종료', r.reason AS '리콜사유',
-            r.recall_count AS '리콜대수', r.correction_count AS '시정대수', r.correction_rate AS '시정률(%)' 
+            r.recall_id AS '리콜ID', -- [★ 수정] 클릭 이벤트를 위해 recall_id 추가
+            b.brand_name AS '브랜드', 
+            m.model_name AS '차종', 
+            r.recall_date AS '리콜개시일',
+            r.prod_from AS '생산시작', 
+            r.prod_to AS '생산종료', 
+            r.reason AS '리콜사유',
+            r.recall_count AS '리콜대수', 
+            r.correction_count AS '시정대수', 
+            r.correction_rate AS '시정률(%)' 
         FROM Recall AS r
         JOIN Model AS m ON r.model_id = m.model_id
         JOIN Brand AS b ON m.brand_id = b.brand_id
@@ -117,8 +125,9 @@ def search_recalls(brand, model, year, keyword):
     finally:
         if cursor: cursor.close()
         if conn and conn.is_connected(): conn.close()
+# --- [수정 끝] ---
 
-# --- [수정된 함수] Pylance 경고 해결 ---
+
 def get_recall_comparison(brand, model):
     if not brand or not model or brand == "전체" or model == "전체":
         return None, pd.DataFrame() 
@@ -126,8 +135,6 @@ def get_recall_comparison(brand, model):
     if conn is None:
         return None, pd.DataFrame()
     
-    # [수정] Pylance가 100% 만족하는 안전한 로직
-    # 1. stats를 기본값으로 먼저 초기화
     stats = {'total_recalls': 0, 'avg_correction_rate': 0}
     keywords_df = pd.DataFrame()
     cursor = None
@@ -142,29 +149,22 @@ def get_recall_comparison(brand, model):
         cursor.execute(stats_query, (brand, model))
         stats_result = cursor.fetchone()
         
-        # 2. stats_result가 딕셔너리인지 "단 한 번만" 확인
         if isinstance(stats_result, dict):
-            # 3. (안전) total_recalls_count 가져오기
             total_recalls_count = 0
             value = stats_result.get('total_recalls')
             if isinstance(value, (int, float, decimal.Decimal, str)):
                 try:
-                    total_recalls_count = int(float(value)) # float으로 먼저 변환
+                    total_recalls_count = int(float(value)) 
                 except (ValueError, TypeError):
                     total_recalls_count = 0
             
-            # 4. total_recalls_count가 0보다 클 경우에만 avg_rate 계산
             if total_recalls_count > 0:
                 final_avg_rate = 0
-                avg_rate = stats_result.get('avg_correction_rate') # Pylance가 "안전하다"고 인지
+                avg_rate = stats_result.get('avg_correction_rate') 
                 if isinstance(avg_rate, (decimal.Decimal, float, int)):
                     final_avg_rate = round(float(avg_rate), 2)
                 
-                # 5. stats 딕셔너리 업데이트
                 stats = {'total_recalls': total_recalls_count, 'avg_correction_rate': final_avg_rate}
-        
-        # (stats_result가 dict가 아니거나, total_recalls_count가 0이면, 
-        #  stats는 맨 처음에 설정한 기본값을 유지)
 
         keywords_query = """
         SELECT k.keyword_text, k.keyword_desc, COUNT(k.keyword_text) as keyword_count
@@ -188,8 +188,6 @@ def get_recall_comparison(brand, model):
         if conn and conn.is_connected(): conn.close()
 
     return stats, keywords_df
-# --- [수정된 함수 끝] ---
-
 
 @st.cache_data(ttl=3600)
 def get_model_profile_data(brand, model):
@@ -234,3 +232,37 @@ def get_model_profile_data(brand, model):
         if cursor: cursor.close() 
         if conn and conn.is_connected(): conn.close()
     return history_df, all_reasons_string
+
+# --- [★ 신규 함수] ---
+@st.cache_data(ttl=600) # 10분간 캐시
+def get_keywords_for_recall(recall_id):
+    """특정 recall_id에 연결된 모든 키워드를 조회합니다."""
+    
+    conn = db_manager.create_connection()
+    if conn is None:
+        return []
+
+    keywords = []
+    cursor = None
+    try:
+        query = """
+        SELECT k.keyword_text 
+        FROM Recall_Keyword_Junction j
+        JOIN Keyword k ON j.keyword_id = k.keyword_id
+        WHERE j.recall_id = %s;
+        """
+        cursor = conn.cursor()
+        cursor.execute(query, (recall_id,))
+        rows = cursor.fetchall()
+        
+        if rows:
+            keywords = [row[0] for row in rows] # (('엔진',), ('화재',)) -> ['엔진', '화재']
+
+    except Exception as e:
+        print(f"get_keywords_for_recall 오류: {e}")
+    finally:
+        if cursor: cursor.close()
+        if conn and conn.is_connected(): conn.close()
+    
+    return keywords
+# --- [신규 함수 끝] ---
