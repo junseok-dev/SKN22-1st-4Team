@@ -71,6 +71,7 @@ SKN22-1st-4Team/
 ├── .streamlit/
 │   └── secrets.toml
 └── requirements.txt
+```
 
 ## 4. 💾 데이터 출처
 
