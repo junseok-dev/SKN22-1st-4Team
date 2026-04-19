@@ -42,3 +42,4 @@ def get_naver_news(query):
         return clean_news_list
     except requests.exceptions.RequestException as e:
         return [{'title': f"API 호출 오류: {e}", 'link': "#", 'description': "네이버 서버에 연결할 수 없거나 API 키가 잘못되었습니다."}]
+        

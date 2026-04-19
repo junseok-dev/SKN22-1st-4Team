@@ -252,3 +252,4 @@ if __name__ == "__main__":
     df_main = load_and_clean_data(EXCEL_FILE_PATH, SHEET_NAMES)
     if df_main is not None:
         insert_data_to_db(df_main)
+        

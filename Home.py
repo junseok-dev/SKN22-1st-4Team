@@ -74,7 +74,8 @@ def display_custom_header():
     st.divider() # 헤더와 본문 구분선
 
 # --- [★ 2. 헤더 함수 호출] ---
-display_custom_header()
+if __name__ == "__main__":
+    display_custom_header()
 
 
 # --- [★ 3. 기존 메인 페이지 콘텐츠] ---
